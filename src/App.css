@@ -3,6 +3,10 @@
   Below, you can see an example of a class called "menu" that changes the color of the text to blue. Modify according to your needs.
 */
 
-.menu {
-  color: blue;
+button {
+  margin: 5px;
+}
+
+input {
+  margin: 5px;
 }

@@ -1,91 +1,98 @@
 import './App.css';
-import MenuItem from './components/MenuItem';
+import {useState} from 'react';
 
-// import 'bootstrap/dist/css/bootstrap.min.css'; // This imports bootstrap css styles. You can use bootstrap or your own classes by using the className attribute in your elements.
-
-// Menu data. An array of objects where each object represents a menu item. Each menu item has an id, title, description, image name, and price.
-// You can use the image name to get the image from the images folder.
-const menuItems = [
-  {
-    id: 1,
-    title: 'Gyoza',
-    description: 'Japanese dumplings',
-    imageName: 'gyoza.png',
-    price: 5.99,
-  },
-  {
-    id: 2,
-    title: 'Sushi',
-    description: 'Japanese rice rolls',
-    imageName: 'sushi.png',
-    price: 6.99,
-  },
-  {
-    id: 3,
-    title: 'Ramen',
-    description: 'Japanese noodle soup',
-    imageName: 'ramen.png',
-    price: 7.99,
-  },
-  {
-    id: 4,
-    title: 'Matcha Cake',
-    description: 'Japanese green tea cake',
-    imageName: 'matcha-cake.png',
-    price: 4.99,
-  },
-  {
-    id: 5,
-    title: 'Mochi',
-    description: 'Japanese rice cake',
-    imageName: 'mochi.png',
-    price: 3.99,
-  },
-  {
-    id: 6,
-    title: 'Yakitori',
-    description: 'Japanese skewered chicken',
-    imageName: 'yakitori.png',
-    price: 2.99,
-  },
-  {
-    id: 7,
-    title: 'Takoyaki',
-    description: 'Japanese octopus balls',
-    imageName: 'takoyaki.png',
-    price: 5.99,
-  },
-  {
-    id: 8,
-    title: 'Sashimi',
-    description: 'Japanese raw fish',
-    imageName: 'sashimi.png',
-    price: 8.99,
-  },
-  {
-    id: 9,
-    title: 'Okonomiyaki',
-    description: 'Japanese savory pancake',
-    imageName: 'okonomiyaki.png',
-    price: 6.99,
-  },
-  {
-    id: 10,
-    title: 'Katsu Curry',
-    description: 'Japanese curry with fried pork',
-    imageName: 'katsu-curry.png',
-    price: 9.99,
-  }
-];
-
+async function fetchAPIdata(longitude, latitude) {
+  const json = {};
+  try {
+    console.log({longitude, latitude});
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&hourly=temperature_2m`;
+    const response = await fetch(url);
+    const json = await response.json();
+    return json.hourly;
+  } catch (err) {
+    alert("API Error");
+    return "";
+  } 
+}
 
 function App() {
+  const [locations, setLocations] = useState([
+    { name: "Dallas",
+      longitude: 96.8,
+      latitude: 32.78
+    },
+    { name: "Houston",
+      longitude: 95.37,
+      latitude: 29.76
+    },
+    { name: "Austin",
+      longitude: 97.74,
+      latitude: 30.27
+    }
+  ]);
+  const [longitude, setLongitude] = useState("");
+  const [latitude, setLatitude] = useState("");
+  const [name, setName] = useState("");
+  const [data, setData] = useState({});
+
+  const displayData = async (currLong, currLat) => {
+    const result = await fetchAPIdata(currLong, currLat);
+    if (result === "") return;
+    setData(result);
+  }
+
+  const submit = async () => {
+    if (name === "" || longitude === "" || latitude === "") return;
+    setLocations([...locations, { name, longitude, latitude }]);
+    await displayData(longitude, latitude);
+    setName("");
+    setLongitude("");
+    setLatitude("");
+  }
+
   return (
     <div>
-      <h1>Menu</h1>
-      <div className="menu">
-        {/* Display menu items dynamicaly here by iterating over the provided menuItems */}
-        <MenuItem title={menuItems[0].title} /> {/* Example for how to use a component */}
+      <div>
+        {locations.map((item) => (
+            <button onClick={() => displayData(item.longitude, item.latitude)}>{item.name}</button>
+          ))}
+      </div>
+      <div>
+        <input
+          placeholder="Latitude"
+          value={latitude}
+          onChange={(input) => setLatitude(input.target.value.trim())}
+        />
+        <input
+          placeholder="Longitude"
+          value={longitude}
+          onChange={(input) => setLongitude(input.target.value.trim())}
+        />
+        <input
+          placeholder="Name"
+          value={name}
+          onChange={(input) => setName(input.target.value.trim())}
+        />
+        <button onClick={() => submit()}>Add</button>
+      </div>
+      <div>
+        {data && data.time && data.temperature_2m && (
+          <div>
+            <h3 style={{ display: "flex", justifyContent: "space-between", width: "300px", margin: "20px 20px 0px 20px" }}>
+              <span>Time:</span>
+              <span>Temperature:</span>
+            </h3>
+            {data.time.map((time, index) => {
+              const temp = data.temperature_2m[index];
+              return (
+                <p style={{ display: "flex", justifyContent: "space-between", width: "300px", margin: "20px 20px 0px 20px" }}>
+                  <span>{time}</span>
+                  <span>{temp} C</span>
+                </p>
+              );
+            })}
+          </div>
+        )}
       </div>
     </div>
   );
